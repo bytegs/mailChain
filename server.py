@@ -17,6 +17,15 @@ def handle(to, sender, subject, body):
     config.read('defaults.cfg')
     #print(config.get('MYSQL', 'host', "localhost"))
     print("Get Chains")
+    if config.get('Mail', 'dump'):
+        if not os.path.exists("./mails"):
+            os.makedirs("./mails")
+        if not os.path.exists("./mails/%s" % sender):
+            os.makedirs("./mails/%s" % sender)
+                d = datetime.now()
+                fp = open("./mails/%s/%s_%s.txt" % (sender, d.strftime("%y_%m_%d"), subject))
+                fp.write(body)
+                fp.close()
     con = mdb.connect(config.get('MYSQL', 'host'), config.get('MYSQL', 'user'), config.get('MYSQL', 'pass'), config.get('MYSQL', 'db'));
     cur = con.cursor()
     cur.execute("SELECT * FROM `mailChain` ORDER BY `mailChain`.`prio` ASC")
