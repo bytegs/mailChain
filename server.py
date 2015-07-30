@@ -56,6 +56,17 @@ def handle(to, sender, subject, body):
             check = False
         print("Chain %s is %s" % ((rule[0]), (check)))
         if check == True:
+            #log
+            if config.get('Mail', 'sendLog'):
+                asender = re.findall(r'\(Authenticated\ssender\:\s{0,10}([^)]*)\)\n\s*', body)
+                if(len(asender)>0):
+                    asender = asender[0]
+                else:
+                    asender = None
+                for t in to:
+                    sql = "INSERT INTO `mailLog`(`from`, `to`, `authenticatedSender`, `subject`) VALUES ('%s', '%s', '%s', '%s')" % (sender, t, asender, subject)
+                    cursor.execute(sql)
+                con.commit()
             #Do Stuff with Mail
             #Remove Authenticated sender
             if rule[11] == True:
