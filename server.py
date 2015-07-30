@@ -65,7 +65,7 @@ def handle(to, sender, subject, body):
                     asender = None
                 for t in to:
                     sql = "INSERT INTO `mailLog`(`from`, `to`, `authenticatedSender`, `subject`) VALUES ('%s', '%s', '%s', '%s')" % (sender, t, asender, subject)
-                    cursor.execute(sql)
+                    cur.execute(sql)
                 con.commit()
             #Do Stuff with Mail
             #Remove Authenticated sender
