@@ -52,7 +52,7 @@ def handle(to, sender, subject, body):
                 smtp = SMTP()
                 if rule[7] == None:
                     rule[7] = 25
-                smtp.connect(rule[6], rule[7])
+                smtp.connect(str(rule[6]), int(rule[7]))
                 if rule[8] != None and rule[9] != None:
                     smtp.login(rule[8], rule[9])
                 smtp.sendmail(sender, to, body)
@@ -66,4 +66,4 @@ def handle(to, sender, subject, body):
     #print "Database version : %s " % ver
 
 # Bind directly.
-inbox.serve(address='0.0.0.0', port=4467)
+inbox.serve(address='127.0.0.1', port=4467)
