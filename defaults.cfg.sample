@@ -1,0 +1,8 @@
+[MYSQL]
+host:localhost
+user:root
+pass:
+db:mailChain
+
+[Mail]
+dump:False
