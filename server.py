@@ -56,6 +56,15 @@ def handle(to, sender, subject, body):
             check = False
         print("Chain %s is %s" % ((rule[0]), (check)))
         if check == True:
+            #Do Stuff with Mail
+            #Remove Authenticated sender
+            if rule[11] == True:
+                body = re.sub(r'\(Authenticated\ssender\:\s[^)]*\)\n\s*', '', body)
+            if config.get('Mail', 'addReceived'):
+                start = body.find("Received")
+                receivedmsg = "Received: mailChain ("+config.get('Mail', 'ReceivedName')+") #"+str(rule[0])+"\r\n"
+                body = body[0:start] + receivedmsg + body[start:]
+            #Send Mail
             send = True
             if rule[6] != None:
                 print("Send SMTP")

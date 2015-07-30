@@ -2,3 +2,4 @@ defaults.cfg
 __pycache__/
 mail.txt
 *.pyc
+test.py
