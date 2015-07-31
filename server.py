@@ -24,7 +24,7 @@ def handle(to, sender, subject, body):
         if not os.path.exists("./mails/%s" % sender):
             os.makedirs("./mails/%s" % sender)
         d = datetime.datetime.now()
-        fp = open("./mails/%s/%s_%s.txt" % (sender, d.strftime("%y_%m_%d"), subject), "w")
+        fp = open("./mails/%s/%s_%s.txt" % (sender, d.strftime("%y_%m_%d_%H_%M_%S"), subject), "w")
         fp.write(body)
         fp.close()
     con = mdb.connect(config.get('MYSQL', 'host'), config.get('MYSQL', 'user'), config.get('MYSQL', 'pass'), config.get('MYSQL', 'db'));
@@ -56,9 +56,12 @@ def handle(to, sender, subject, body):
             check = False
         print("Chain %s is %s" % ((rule[0]), (check)))
         if check == True:
+            #Send Mail
+            send = True
+            tosend = True
             #log
+            asender = re.findall(r'\(Authenticated\ssender\:\s{0,10}([^)]*)\)\n\s*', body)
             if config.get('Mail', 'sendLog'):
-                asender = re.findall(r'\(Authenticated\ssender\:\s{0,10}([^)]*)\)\n\s*', body)
                 if(len(asender)>0):
                     asender = asender[0]
                 else:
@@ -75,22 +78,40 @@ def handle(to, sender, subject, body):
                 start = body.find("Received")
                 receivedmsg = "Received: mailChain ("+config.get('Mail', 'ReceivedName')+") #"+str(rule[0])+"\r\n"
                 body = body[0:start] + receivedmsg + body[start:]
-            #Send Mail
-            send = True
-            if rule[6] != None:
-                print("Send SMTP")
-                smtp = SMTP()
-                if rule[7] == None:
-                    rule[7] = 25
-                smtp.connect(str(rule[6]), int(rule[7]))
-                if rule[8] != None and rule[9] != None:
-                    smtp.login(rule[8], rule[9])
-                smtp.sendmail(sender, to, body)
-                smtp.quit()
-            if rule[10] != None:
-                print("Make HTTP Call")
-                payload = {'to': to, 'sender': sender, 'subject': subject, 'body': body}
-                r = requests.post(rule[10], data=payload)
+            #Check Authenticated Header
+            if config.get('Mail', 'mailAuthenticatedSender'):
+                con = mdb.connect(config.get('MYSQL', 'host'), config.get('MYSQL', 'user'), config.get('MYSQL', 'pass'), config.get('MYSQL', 'db'));
+                cur = con.cursor()
+                cur.execute('SELECT * FROM `mailAuthenticatedSender` WHERE `from` = "%s"' % sender)
+                asenderregex = cur.fetchone()
+                print asenderregex
+                if asenderregex != None and re.match(asenderregex[2], asender) is None:
+                    print("Asender FAILED!!!!!")
+                    msg = ("From: %s\r\nSubject: Mail Authenticated Sender Fails\r\nTo: %s\r\n\r\n" % (config.get('SendAbuse', 'from'), ", ".join([sender])))
+                    msg = msg + "Mail from %s send from Authenticated Sender %s\r\n\r\nMail don't send, please check the Config or Contact your Mail-Server-Admin per E-Mail to %s" % (sender, asender, config.get('SendAbuse', 'from'))
+                    #handle(sender, "abuse@byte.gs", "Mail Authenticated Sender Fails", msg)
+                    smtp = SMTP()
+                    smtp.connect(config.get('SendAbuse', 'server'), config.get('SendAbuse', 'port'))
+                    smtp.login(config.get('SendAbuse', 'user'), config.get('SendAbuse', 'pass'))
+                    smtp.sendmail(config.get('SendAbuse', 'from'), [sender], msg)
+                    smtp.quit()
+                    tosend = False
+            if tosend == True:
+                if rule[6] != None:
+                    print("Send SMTP")
+                    smtp = SMTP()
+                    port = 25
+                    if rule[7] != None:
+                        port = int(rule[7])
+                    smtp.connect(str(rule[6]), int(port))
+                    if rule[8] != None and rule[9] != None:
+                        smtp.login(rule[8], rule[9])
+                    smtp.sendmail(sender, to, body)
+                    smtp.quit()
+                if rule[10] != None:
+                    print("Make HTTP Call")
+                    payload = {'to': to, 'sender': sender, 'subject': subject, 'body': body}
+                    r = requests.post(rule[10], data=payload)
         #print(rule)
     #print(ver)
     #print "Database version : %s " % ver
