@@ -6,3 +6,14 @@ db:mailChain
 
 [Mail]
 dump:False
+addReceived:True
+ReceivedName:Default
+sendLog:True
+mailAuthenticatedSender:True
+
+[SendAbuse]
+from:
+server:
+port:
+user:
+pass:
