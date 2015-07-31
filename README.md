@@ -63,3 +63,20 @@ pass:
 
 ### SendAbuse
 If the Script have to send a abused Message (e.g. if the AuthenticatedSender don't match) it use the SMTP-Setting of this Section to send it.
+
+## Installation
+Do the following Steps:
+### Set up the Database
+Create the Database Structure from the mysql.sql File and create a new MYSQL User
+
+### Clone the Project and Config it
+Clone the Project and change the defaults.cfg to your Settings. Than run the server, install all needet dependencies. Than Start the server.py
+
+### Config Postfiy
+Let Postfiy relay all Mails ofter 127.0.0.1:4467
+
+### Add a Default Rule in your Chain
+```
+INSERT INTO `mailChain` (prio`, `from`, `to`, `allTo`, `subject`, `smtpServer`, `smtpPort`, `smtpUser`, `smtpPass`, `httpCall`, `removeAuthenticatedSender`) VALUES
+(100000, NULL, NULL, 1, NULL, 'smtp-relay.server', NULL, NULL, NULL, NULL, 1);
+```
