@@ -107,7 +107,7 @@ def handle(to, sender, subject, body):
     config = ConfigParser.RawConfigParser()
     config.read('defaults.cfg')
     #Dump Mail to File System
-    if config.get('Mail', 'dump'):
+    if config.get('Mail', 'dump') == True:
         dumpMail(to, sender, subject, body)
     #Connect to Database
     try:
@@ -141,14 +141,14 @@ def handle(to, sender, subject, body):
                 asenderregex = cur.fetchone()
                 if asenderregex != None:
                     tosend = checkAuthenticatedSender(sender, body, str(asenderregex[2]))
-            #Remove Authenticate Header:
-            if rule[11] == True:
-                body = removeAuthenticatedSende(body)
             #tosend = False
             if tosend == True:
                 pLog("Redirect Mail")
                 if config.get('Mail', 'sendLog'):
                     logMail(to, sender, subject, body, con)
+                #Remove Authenticate Header:
+                if rule[11] == True:
+                    body = removeAuthenticatedSende(body)
                 if rule[6] != None:
                     pLog("Send Mail ofer SMTP Relay %s" % rule[6])
                     smtp = SMTP()
