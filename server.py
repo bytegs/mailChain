@@ -6,6 +6,7 @@ import ConfigParser, os
 import re
 import datetime
 import sys
+import hashlib
 
 inbox = Inbox()
 
@@ -61,7 +62,9 @@ def dumpMail(to, sender, subject, body):
     if not os.path.exists("./mails/%s" % sender):
         os.makedirs("./mails/%s" % sender)
     d = datetime.datetime.now()
-    fp = open("./mails/%s/%s_%s.txt" % (sender, d.strftime("%y_%m_%d_%H_%M_%S"), subject), "w")
+    m = hashlib.md5()
+    m.update("%s_%s" % (d.strftime("%y_%m_%d_%H_%M_%S"), subject))
+    fp = open("./mails/%s/%s.txt" % (sender, str(m.hexdigest())), "w")
     fp.write(body)
     fp.close()
     pLog("Dump Mail to File System")
