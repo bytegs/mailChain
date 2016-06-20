@@ -41,13 +41,13 @@ def checkChain(rule, to, sender, subject):
 
 def checkSpamc(sender, body):
     filename = tempfile.gettempdir()+"/"+str(uuid.uuid1())
-    print(filename)
     with open(filename, 'w') as f:
         f.write(body)
     ret = os.popen("spamc -c < %s" % filename).read()
     detais = str(ret).split("/")
     count = float(detais[0].strip())
     max = float(detais[1].strip())
+    pLog("SpamC: "+ret)
     if count > max:
         return False
     return True
@@ -160,7 +160,7 @@ def runBasic(to, sender, subject, body):
                     if retAuth == False:
                         tosend = False
                         return "503 Autoriced Header is wrong"
-            if config.get('Mail', 'spamc'):
+            if config.get('Mail', 'spamc') == True:
                 res = checkSpamc(sender, body)
                 if res == False:
                     pLog("Mail as Spam detectet and reject")
