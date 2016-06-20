@@ -163,8 +163,10 @@ def runBasic(to, sender, subject, body):
             if config.get('Mail', 'spamc'):
                 res = checkSpamc(sender, body)
                 if res == False:
+                    pLog("Mail as Spam detectet and reject")
                     tosend = False
                     return "550 Spam detect"
+                pLog("No Spam, send mail")
             tosend = False
             if tosend == True:
                 pLog("Redirect Mail")
