@@ -12,6 +12,8 @@ import sys
 import hashlib
 from sender import Mail, Message
 import time
+import tempfile
+import uuid
 
 inbox = Inbox()
 
@@ -36,6 +38,19 @@ def checkChain(rule, to, sender, subject):
     if rule[5] != None and re.match(rule[5], subject) is None:
         check = False
     return check
+
+def checkSpamc(sender, body):
+    filename = tempfile.gettempdir()+"/"+str(uuid.uuid1())
+    print(filename)
+    with open(filename, 'w') as f:
+        f.write(body)
+    ret = os.popen("spamc -c < %s" % filename).read()
+    detais = str(ret).split("/")
+    count = float(detais[0].strip())
+    max = float(detais[1].strip())
+    if count > max:
+        return False
+    return True
 
 def checkAuthenticatedSender(sender, body, asenderRegEx):
     pLog("Check Authenticated Sender")
@@ -145,7 +160,12 @@ def runBasic(to, sender, subject, body):
                     if retAuth == False:
                         tosend = False
                         return "503 Autoriced Header is wrong"
-            #tosend = False
+            if config.get('Mail', 'spamc'):
+                res = checkSpamc(sender, body)
+                if res == False:
+                    tosend = False
+                    return "550 Spam detect"
+            tosend = False
             if tosend == True:
                 pLog("Redirect Mail")
                 if config.get('Mail', 'sendLog'):
@@ -164,10 +184,14 @@ def runBasic(to, sender, subject, body):
                         smtp.login(rule[8], rule[9])
                     smtp.sendmail(sender, to, body)
                     smtp.quit()
+                    return "250 OK"
                 if rule[10] != None:
                     pLog("Make HTTP Call to %s" % rule[10])
                     payload = {'to': to, 'sender': sender, 'subject': subject, 'body': body}
                     r = requests.post(rule[10], data=payload)
+                    return "250 OK - POST Request send"
+            else:
+                return "550 Something go wrong"
 
 def sendMail(to, subject, msgContext):
     pLog("Send Server Mail")

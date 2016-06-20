@@ -10,6 +10,7 @@ addReceived:True
 ReceivedName:Default
 sendLog:True
 mailAuthenticatedSender:True
+spamc:False
 
 [SendAbuse]
 from:

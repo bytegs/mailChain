@@ -1,4 +1,6 @@
 dev-master
+
+0.1.2
 * Update to Python 3
 * use pip to install inbox.py
 * use sender to send abuse mails
