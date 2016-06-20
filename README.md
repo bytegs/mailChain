@@ -7,6 +7,7 @@ It creates a new MYSQL-Connection (and Query) for each Mail, so it always have t
 ### Basic Functions
 * Open SMTP-Relay Server
 * Check Mail agains Rule to decide which SMTP-Relay or HTTP Call used to forward to
+* Check E-Mails bevor Forwording agains spamc
 
 ### Posible Rules in on Chain
 * Check if From or Subject Match a RegEx (From MYSQL)
@@ -26,28 +27,8 @@ It creates a new MYSQL-Connection (and Query) for each Mail, so it always have t
 * Log Mail (To, From, Subject, AuthenticatedSende, Timestamp) to a MYSQL Database to detect Spaming
 
 ## Config File
-The Basic Config File contains the MYSQL Connection and some Basic Config.
-```
-[MYSQL]
-host:localhost
-user:root
-pass:
-db:mailChain
+The Basic Config File contains the MYSQL Connection and some Basic Config. Check the defaults.cfg.sample for more detais.
 
-[Mail]
-dump:False
-addReceived:True
-ReceivedName:Default
-sendLog:True
-mailAuthenticatedSender:True
-
-[SendAbuse]
-from:
-server:
-port:
-user:
-pass:
-```
 ### MYSQL
 *  host -> Contains the MYSQL Host
 *  user -> Contains the MYSQL User
@@ -55,11 +36,12 @@ pass:
 *  db -> Contains the MYSQL Database Name
 
 ### Mail
-* dump -> If it "True" all Mails are dump to the Database before Modified
+* dump -> If it "True" all Mails are dump to the Filesystem before Modified
 * addReceived -> If it "True" a "Received" Entry to the Mail Header
 * ReceivedName -> Contains the Name to Add in the "Received" Entry
 * sendLog -> If it is True, all outgoing Mails log in a MYSQL Database
 * mailAuthenticatedSender -> If it is "True" outgoing Mails Check if a AuthenticatedSender is required and if it match
+* spamc -> Check if the mail with spamc and reject if the Spam-Sore is to hight (for all mails)
 
 ### SendAbuse
 If the Script have to send a abused Message (e.g. if the AuthenticatedSender don't match) it use the SMTP-Setting of this Section to send it.
@@ -68,16 +50,11 @@ If the Script have to send a abused Message (e.g. if the AuthenticatedSender don
 Do the following Steps:
 
 ###Install Requirments
-*not up to date*
 ```
 sudo apt-get install python3.4-venv libmysqlclient-dev python3-dev
 pyvenv venv
 source venv/bin/acticate
-pip install sender
-pip install inbox.py
-pip install ConfigParser
-pip install mysqlclient
-pip install requests
+pip install -r requirments.txt
 ```
 ### Set up the Database
 Create the Database Structure from the mysql.sql File and create a new MYSQL User

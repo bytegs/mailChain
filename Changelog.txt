@@ -1,4 +1,5 @@
 dev-master
+* add spamC parameter (general)
 
 0.1.2
 * Update to Python 3
