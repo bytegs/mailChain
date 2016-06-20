@@ -1,12 +1,17 @@
+#!/usr/bin/python
 from inbox import Inbox
 import MySQLdb as mdb
 from smtplib import SMTP
 import requests
-import ConfigParser, os
+from backports import configparser as ConfigParser
+import os
+#import ConfigParser, os
 import re
 import datetime
 import sys
 import hashlib
+from sender import Mail, Message
+import time
 
 inbox = Inbox()
 
@@ -33,6 +38,7 @@ def checkChain(rule, to, sender, subject):
     return check
 
 def checkAuthenticatedSender(sender, body, asenderRegEx):
+    pLog("Check Authenticated Sender")
     #print(asenderRegEx)
     asender = re.findall(r'\(Authenticated\ssender\:\s{0,10}([^)]*)\)\n\s*', body)
     if(len(asender)>0):
@@ -44,13 +50,8 @@ def checkAuthenticatedSender(sender, body, asenderRegEx):
         #Send Abuse Mail
         config = ConfigParser.RawConfigParser()
         config.read('defaults.cfg')
-        msg = ("From: %s\r\nSubject: Mail Authenticated Sender Fails\r\nTo: %s\r\n\r\n" % (config.get('SendAbuse', 'from'), ", ".join([sender])))
-        msg = msg + "Mail from %s send from Authenticated Sender %s\r\n\r\nMail don't send, please check the Config or Contact your Mail-Server-Admin per E-Mail to %s" % (sender, asender, config.get('SendAbuse', 'from'))
-        smtp = SMTP()
-        smtp.connect(config.get('SendAbuse', 'server'), config.get('SendAbuse', 'port'))
-        smtp.login(config.get('SendAbuse', 'user'), config.get('SendAbuse', 'pass'))
-        smtp.sendmail(config.get('SendAbuse', 'from'), [sender], msg)
-        smtp.quit()
+        msg = "Mail from %s send from Authenticated Sender %s\r\n\r\nThe Mail Header must match!\r\nMail don't send, please check the Config or Contact your Mail-Server-Admin per E-Mail to %s" % (sender, asender, config.get('SendAbuse', 'from'))
+        sendMail(sender, "Mail from %s with wrong Authenticated Sender Header", msg)
         pLog("AuthenticatedSender %s dont match on %s" % (asender, asenderRegEx))
         return False
     pLog("AuthenticatedSender Match")
@@ -100,8 +101,7 @@ def addReceived(body, ruleId):
     pLog("Add Received Header to Mail")
     return body
 
-@inbox.collate
-def handle(to, sender, subject, body):
+def runBasic(to, sender, subject, body):
     pLog("Incoming mail from %s" % sender)
     #Read Config
     config = ConfigParser.RawConfigParser()
@@ -137,10 +137,14 @@ def handle(to, sender, subject, body):
                 body = addReceived(body, rule[0])
             #Check Authenticated Header
             if config.get('Mail', 'mailAuthenticatedSender'):
+                pLog("Check Authentication Sender for %s" % sender)
                 cur.execute('SELECT * FROM `mailAuthenticatedSender` WHERE `from` = "%s"' % sender)
                 asenderregex = cur.fetchone()
                 if asenderregex != None:
-                    tosend = checkAuthenticatedSender(sender, body, str(asenderregex[2]))
+                    retAuth = checkAuthenticatedSender(sender, body, str(asenderregex[2]))
+                    if retAuth == False:
+                        tosend = False
+                        return "503 Autoriced Header is wrong"
             #tosend = False
             if tosend == True:
                 pLog("Redirect Mail")
@@ -165,6 +169,33 @@ def handle(to, sender, subject, body):
                     payload = {'to': to, 'sender': sender, 'subject': subject, 'body': body}
                     r = requests.post(rule[10], data=payload)
 
+def sendMail(to, subject, msgContext):
+    pLog("Send Server Mail")
+    config = ConfigParser.RawConfigParser()
+    config.read('defaults.cfg')
+    msg = Message(subject, fromaddr=config.get('SendAbuse', 'from'), to=to)
+    if(to!=config.get('SendAbuse', 'from')):
+        msg.bcc = config.get('SendAbuse', 'from')
+    msg.body = msgContext
+    msg.date = time.time()
+    msg.charset = "utf-8"
+    mail = Mail(config.get('SendAbuse', 'server'), port=config.get('SendAbuse', 'port'), username=config.get('SendAbuse', 'user'), password=config.get('SendAbuse', 'pass'),use_tls=False, use_ssl=False, debug_level=None)
+    mail.send(msg)
+
+@inbox.collate
+def handle(to, sender, subject, body):
+    try:
+        return runBasic(to, sender, subject, body)
+    except:
+        pLog("Something go Wrong, Mail sendet")
+        errorStr = str(sys.exc_info())
+        config = ConfigParser.RawConfigParser()
+        config.read('defaults.cfg')
+        sendMail(sender, "Mail cant not sendet", "Hello, you try to send a Mail, we cant send this Mail because an error appear. Our Team get the Information, please try it again later!")
+        sendMail(config.get('SendAbuse', 'from'), "MailChain Error", "So following error appear:\r\n\r\n"+errorStr)
+        return "550 Something go wrong"
+
 # Bind directly.
 pLog("Start Server")
+#sendMail("hello@kekskurse.de", "Abuse Mail", "Something go Wrong!")
 inbox.serve(address='127.0.0.1', port=4467)

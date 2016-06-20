@@ -66,6 +66,18 @@ If the Script have to send a abused Message (e.g. if the AuthenticatedSender don
 
 ## Installation
 Do the following Steps:
+
+###Install Requirments
+*not up to date*
+```
+pyvenv venv
+source venv/bin/acticate
+pip install sender
+pip install inbox.py
+pip install ConfigParser
+pip install mysqlclient
+pip install requests
+```
 ### Set up the Database
 Create the Database Structure from the mysql.sql File and create a new MYSQL User
 

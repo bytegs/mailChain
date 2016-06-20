@@ -4,3 +4,4 @@ mail.txt
 *.pyc
 test.py
 mails/*
+venv/
