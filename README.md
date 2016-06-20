@@ -70,6 +70,7 @@ Do the following Steps:
 ###Install Requirments
 *not up to date*
 ```
+sudo apt-get install python3.4-venv libmysqlclient-dev python3-dev
 pyvenv venv
 source venv/bin/acticate
 pip install sender

@@ -51,7 +51,7 @@ def checkAuthenticatedSender(sender, body, asenderRegEx):
         config = ConfigParser.RawConfigParser()
         config.read('defaults.cfg')
         msg = "Mail from %s send from Authenticated Sender %s\r\n\r\nThe Mail Header must match!\r\nMail don't send, please check the Config or Contact your Mail-Server-Admin per E-Mail to %s" % (sender, asender, config.get('SendAbuse', 'from'))
-        sendMail(sender, "Mail from %s with wrong Authenticated Sender Header", msg)
+        sendMail(sender, "Mail from "+sender+" with wrong Authenticated Sender Header", msg)
         pLog("AuthenticatedSender %s dont match on %s" % (asender, asenderRegEx))
         return False
     pLog("AuthenticatedSender Match")
