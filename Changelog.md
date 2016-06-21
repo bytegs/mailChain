@@ -1,3 +1,12 @@
+#dev-threading
+* rewrite Rules
+* switch to pymysql (python 3)
+* switch to configparser (python3)
+* Performanter Config Object (read single time)
+* Performanter MYSQL Connection (one connection possible)
+* OOP
+* remove dumpMail to Filesystem
+
 #dev-master
 * add spamC parameter (general)
 
