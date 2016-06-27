@@ -20,6 +20,7 @@ class chainController(threading.Thread):
 		self.sender = sender
 		self.subject = subject
 		self.body = body
+		self.messageID = None
 		self.retStr = None
 		self.log = logging.getLogger()
 		self.log.debug("Init chain Controll Thread")
@@ -40,6 +41,9 @@ class chainController(threading.Thread):
 
 	def sendMail(self, to, subject, msgContext):
 		self.log.debug("Send Server Mail")
+		if(self.config.get('SendAbuse', 'debug') == "True"):
+			self.log.info("Debug modus, dont send Mails!")
+			return False
 		msg = Message(subject, fromaddr=self.config.get('SendAbuse', 'from'), to=to)
 		if(to!=self.config.get('SendAbuse', 'from')):
 			msg.bcc = self.config.get('SendAbuse', 'from')
@@ -54,17 +58,17 @@ class chainController(threading.Thread):
 		self.log.debug("Mail to %s sended" % to)
 
 	def dumpMailHDD(self):
-		self.log.info("dumpMail/dumpMailHDD will be deprecated soon")
-		if not os.path.exists("./mails"):
-			os.makedirs("./mails")
-			if not os.path.exists("./mails/%s" % self.sender):
-				os.makedirs("./mails/%s" % self.sender)
-		d = datetime.datetime.now()
-		m = hashlib.md5()
-		m.update("%s_%s" % (d.strftime("%y_%m_%d_%H_%M_%S"), self.subject))
-		fp = open("./mails/%s/%s.txt" % (self.sender, str(m.hexdigest())), "w")
-		fp.write(self.body)
-		fp.close()
+		self.log.error("dumpMail/dumpMailHDD is remved!")
+		return False
+
+	def dumpMailSQL(self):
+		self.log.debug("Dump to DB")
+		sql = 'INSERT INTO `outgoing`(`to`, `sender`,`orginalbody`, `body`, `status`) VALUES (%s, %s, %s, %s, "incommed")';
+		self.cur.execute(sql, (self.to, self.sender, self.body, self.body))
+		self.cur.execute("SELECT LAST_INSERT_ID()")
+		id = self.cur.fetchone()
+		self.log.info("Mail ID:"+str(id[0]))
+		self.messageID = id[0]
 
 	def retMailInfo(self):
 		return self.retStr
@@ -99,6 +103,7 @@ class chainController(threading.Thread):
 		if asenderregex != None:
 			retAuth = self.checkAuthenticatedSender(str(asenderregex[2]))
 			if retAuth == False:
+				self.setStatus("error")
 				self.setResponse("503 Autoriced Header is wrong")
 				return False
 			else:
@@ -136,8 +141,9 @@ class chainController(threading.Thread):
 		detais = str(ret).split("/")
 		count = float(detais[0].strip())
 		max = float(detais[1].strip())
-		self.log.debug("Spam Score: "+ret)
+		self.log.debug("Spam Score: "+ret.strip())
 		if count > max:
+			self.setStatus("error")
 			self.setResponse("550 Spam detect")
 			self.log.info("Spam Detact, reject")
 			return False
@@ -156,22 +162,31 @@ class chainController(threading.Thread):
 			asender = None
 		for t in self.to:
 			#sql = "INSERT INTO `mailLog`(`from`, `to`, `authenticatedSender`, `subject`) VALUES ('%s', '%s', '%s', '%s')" % (self.sender, self.t, asender, self.subject)
-			sql = "INSERT INTO `mailLog`(`from`, `to`, `authenticatedSender`, `subject`) VALUES (%s, %s, %s, %s)"
-			self.cur.execute(sql, (self.sender, t, asender, self.subject))
+			sql = "INSERT INTO `mailLog`(`from`, `to`, `authenticatedSender`, `subject`, `outgoingID`) VALUES (%s, %s, %s, %s, %s)"
+			self.cur.execute(sql, (self.sender, t, asender, self.subject, self.messageID))
 		self.db.commit()
 		self.log.debug("Mail Logged in DB")
 
+	def setStatus(self, status):
+		if(self.config.get("Mail", "dumpSQL") == "True"):
+			self.cur.execute("UPDATE `mail2`.`outgoing` SET `status` = %s WHERE `outgoing`.`id` = "+str(int(self.messageID))+";", (status))
+		else:
+			self.log.error("Cant change status if dumpSQL is disabled")
+
+
 	def runMain(self):
 		# Dump Mail to HDD
-		if self.config.get('Mail', 'dump') == True:
+		if self.config.get('Mail', 'dump') == "True":
 			self.dumpMailHDD()
+		if self.config.get("Mail", "dumpSQL") == "True":
+			self.dumpMailSQL()
 		# Check Auterised Sender Header
 		if self.config.get('Mail', 'mailAuthenticatedSender'):
 			ret = self.getAuthenticatedSenderCheck()
 			if(ret == False):
 				return False
 		# General SpamC Check
-		print(self.config.get('Mail', 'spamc'))
+		#print(self.config.get('Mail', 'spamc'))
 		if self.config.get('Mail', 'spamc') == True or self.config.get('Mail', 'spamc') == "True":
 			res = self.checkSpamc()
 			if res == False:
@@ -201,14 +216,28 @@ class chainController(threading.Thread):
 
 					if rule[8] != None and rule[9] != None:
 						smtp.login(rule[8], rule[9])
-					smtp.sendmail(self.sender, self.to, self.body)
-					smtp.quit()
+					#smtp.sendmail(self.sender, self.to, self.body)
+					#smtp.quit()
 					self.setResponse("250 OK")
+					self.setStatus("delivered")
 				if rule[10] != None:
 					self.log.info("Make HTTP Call to %s" % rule[10])
 					payload = {'to': to, 'sender': sender, 'subject': subject, 'body': body}
 					r = requests.post(rule[10], data=payload)
 					self.setResponse("250 OK - POST Request")
+					self.setStatus("delivered")
+				if rule[12] == True && rule[6] == False:
+					if(self.config.get('sendMail', 'enabled')=="True"):
+						self.setStatus("error")
+						self.setResponse("550 - sendMail function not enabled")
+					elif self.config.get("Mail", "dumpSQL") != "True":
+						self.setStatus("error")
+						self.setResponse("550 - enabled dumpSQL for direct Send")
+					else:
+						self.setStatus("toSent")
+
+
+
 				return True
 
 	def setResponse(self, msg):
@@ -224,5 +253,6 @@ class chainController(threading.Thread):
 			self.log.critical(errorStr)
 			self.sendMail(self.sender, "Mail cant not sendet", "Hello, you try to send a Mail, we cant send this Mail because an error appear. Our Team get the Information, please try it again later!")
 			self.sendMail(self.config.get('SendAbuse', 'from'), "MailChain Error", "So following error appear:\r\n\r\n"+errorStr)
+			self.setStatus("error")
 			self.setResponse("550 - Oups")
 		#Mail Dump FileSystem

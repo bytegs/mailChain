@@ -11,6 +11,7 @@ ReceivedName:Default
 sendLog:True
 mailAuthenticatedSender:True
 spamc:False
+dumpSQL:True
 
 [SendAbuse]
 from:
@@ -18,3 +19,7 @@ server:
 port:
 user:
 pass:
+debug:True
+
+[sendMail]
+loopTime: 60

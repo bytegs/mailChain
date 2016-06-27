@@ -5,7 +5,10 @@
 * Performanter Config Object (read single time)
 * Performanter MYSQL Connection (one connection possible)
 * OOP
-* remove dumpMail to Filesystem
+* add Debug Modus (dont send abuse mails)
+* add dumpToMYSQL
+* remove hdd dump
+* send without relay (beta)
 
 #dev-master
 * add spamC parameter (general)
