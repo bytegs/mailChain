@@ -170,6 +170,7 @@ class chainController(threading.Thread):
 	def setStatus(self, status):
 		if(self.config.get("Mail", "dumpSQL") == "True"):
 			self.cur.execute("UPDATE `mail2`.`outgoing` SET `status` = %s WHERE `outgoing`.`id` = "+str(int(self.messageID))+";", (status))
+			self.log.debug("Set Status to: "+str(status))
 		else:
 			self.log.error("Cant change status if dumpSQL is disabled")
 
@@ -226,7 +227,7 @@ class chainController(threading.Thread):
 					r = requests.post(rule[10], data=payload)
 					self.setResponse("250 OK - POST Request")
 					self.setStatus("delivered")
-				if rule[12] == True && rule[6] == False:
+				if rule[12] == True and rule[6] == False:
 					if(self.config.get('sendMail', 'enabled')=="True"):
 						self.setStatus("error")
 						self.setResponse("550 - sendMail function not enabled")
@@ -255,4 +256,5 @@ class chainController(threading.Thread):
 			self.sendMail(self.config.get('SendAbuse', 'from'), "MailChain Error", "So following error appear:\r\n\r\n"+errorStr)
 			self.setStatus("error")
 			self.setResponse("550 - Oups")
+		self.db.commit()
 		#Mail Dump FileSystem
