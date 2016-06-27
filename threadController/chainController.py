@@ -256,6 +256,6 @@ class chainController(threading.Thread):
 			self.sendMail(self.config.get('SendAbuse', 'from'), "MailChain Error", "So following error appear:\r\n\r\n"+errorStr)
 			self.setStatus("error")
 			self.setResponse("550 - Oups")
-		self.log.debug("Status: "+self.retStr)
+		self.log.debug("Status: "+str(self.retStr))
 		self.db.commit()
 		#Mail Dump FileSystem
