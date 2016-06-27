@@ -45,6 +45,7 @@ class sendMail(threading.Thread):
 					self.log.debug("Domain: "+domain)
 					mailserver = dns.resolver.query(domain, 'MX')
 					self.log.debug("Mailserver: "+str(mailserver[0].exchange))
+					self.log.debug("Log filename: "+filename)
 					sys.stdout = sys.stderr = open(filename, "a")
 					smtpObj = smtplib.SMTP(str(mailserver[0].exchange))
 					smtpObj.set_debuglevel(1)

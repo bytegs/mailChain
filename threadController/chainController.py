@@ -236,6 +236,7 @@ class chainController(threading.Thread):
 						self.setResponse("550 - enabled dumpSQL for direct Send")
 					else:
 						self.setStatus("toSent")
+						self.setResponse("250 - sending")
 
 
 
