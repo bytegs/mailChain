@@ -3,5 +3,6 @@ __pycache__/
 mail.txt
 *.pyc
 test.py
+test*
 mails/*
 venv/

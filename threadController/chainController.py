@@ -4,11 +4,14 @@ import configparser
 import pymysql
 import sys
 from smtplib import SMTP
-from sender import Mail, Message
+from sender import Mail, Message, Attachment
 import requests
 import re
 import time
 import traceback
+import tempfile
+import uuid
+import os
 
 class chainController(threading.Thread):
 	def __init__(self, to, sender, subject, body, config = None, db = None):
@@ -40,6 +43,9 @@ class chainController(threading.Thread):
 		msg = Message(subject, fromaddr=self.config.get('SendAbuse', 'from'), to=to)
 		if(to!=self.config.get('SendAbuse', 'from')):
 			msg.bcc = self.config.get('SendAbuse', 'from')
+		else:
+			mailattachment = Attachment("orginalmail.txt", "text/plain", self.body)
+			msg.attach(mailattachment)
 		msg.body = msgContext
 		msg.date = time.time()
 		msg.charset = "utf-8"
@@ -48,7 +54,17 @@ class chainController(threading.Thread):
 		self.log.debug("Mail to %s sended" % to)
 
 	def dumpMailHDD(self):
-		self.log.error("dumpMailHDD is not used anymore!")
+		self.log.info("dumpMail/dumpMailHDD will be deprecated soon")
+		if not os.path.exists("./mails"):
+			os.makedirs("./mails")
+			if not os.path.exists("./mails/%s" % self.sender):
+				os.makedirs("./mails/%s" % self.sender)
+		d = datetime.datetime.now()
+		m = hashlib.md5()
+		m.update("%s_%s" % (d.strftime("%y_%m_%d_%H_%M_%S"), self.subject))
+		fp = open("./mails/%s/%s.txt" % (self.sender, str(m.hexdigest())), "w")
+		fp.write(self.body)
+		fp.close()
 
 	def retMailInfo(self):
 		return self.retStr
@@ -120,12 +136,16 @@ class chainController(threading.Thread):
 		detais = str(ret).split("/")
 		count = float(detais[0].strip())
 		max = float(detais[1].strip())
-		pLog("SpamC: "+ret)
+		self.log.debug("Spam Score: "+ret)
 		if count > max:
 			self.setResponse("550 Spam detect")
 			self.log.info("Spam Detact, reject")
 			return False
 		return True
+
+	def removeAuthenticatedSende(self):
+		self.body = re.sub(r'\(Authenticated\ssender\:\s[^)]*\)\n\s*', '', self.body)
+		self.log.debug("Remove Authenticated Sende from Mail Head")
 
 	def logMail(self):
 		asender = re.findall(r'\(Authenticated\ssender\:\s{0,10}([^)]*)\)\n\s*', self.body)
@@ -175,7 +195,10 @@ class chainController(threading.Thread):
 					port = 25
 					if rule[7] != None:
 						port = int(rule[7])
+					self.log.debug("SMTP-Server: "+str(rule[6])+":"+str(port))
+					#smtp.set_debuglevel(1)
 					smtp.connect(str(rule[6]), int(port))
+
 					if rule[8] != None and rule[9] != None:
 						smtp.login(rule[8], rule[9])
 					smtp.sendmail(self.sender, self.to, self.body)
