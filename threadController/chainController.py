@@ -227,7 +227,7 @@ class chainController(threading.Thread):
 					r = requests.post(rule[10], data=payload)
 					self.setResponse("250 OK - POST Request")
 					self.setStatus("delivered")
-				if rule[12] == True and rule[6] == False:
+				if rule[12] == True and rule[6] == None:
 					if(self.config.get('sendMail', 'enabled')=="True"):
 						self.setStatus("error")
 						self.setResponse("550 - sendMail function not enabled")
