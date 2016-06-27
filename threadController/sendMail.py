@@ -55,16 +55,12 @@ class sendMail(threading.Thread):
 			self.cur.execute("SELECT * FROM `outgoing` WHERE `status` = 'toSent'")
 			res = self.cur.fetchall()
 			for mail in res:
-				#orig_std = (sys.stdout, sys.stderr)
-				#filename = tempfile.gettempdir()+"/"+str(uuid.uuid1())
 				try:
 					self.log.debug("Send Mail #"+str(mail[0]))
 					domain = mail[1][mail[1].find("@")+1:]
 					self.log.debug("Domain: "+domain)
 					mailserver = dns.resolver.query(domain, 'MX')
 					self.log.debug("Mailserver: "+str(mailserver[0].exchange))
-					#self.log.debug("Log filename: "+filename)
-					#sys.stdout = open(filename, "a")
 					smtpObj = MailChainSMTP(str(mailserver[0].exchange))
 					smtpObj.set_debuglevel(1)
 					try:

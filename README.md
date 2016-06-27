@@ -8,6 +8,8 @@ It creates a new MYSQL-Connection (and Query) for each Mail, so it always have t
 * Open SMTP-Relay Server
 * Check Mail agains Rule to decide which SMTP-Relay or HTTP Call used to forward to
 * Check E-Mails bevor Forwording agains spamc
+* Log Mails to detect spam
+* Log complete Mail inc. Body to mysql
 
 ### Posible Rules in on Chain
 * Check if From or Subject Match a RegEx (From MYSQL)
@@ -25,6 +27,7 @@ It creates a new MYSQL-Connection (and Query) for each Mail, so it always have t
 * Send Mail to another SMTP-Relay
 * Make a HTTP Call with the Mail Content in a POST Request
 * Log Mail (To, From, Subject, AuthenticatedSende, Timestamp) to a MYSQL Database to detect Spaming
+* Send Mails to the receiving mailserver (testing)
 
 ## Config File
 The Basic Config File contains the MYSQL Connection and some Basic Config. Check the defaults.cfg.sample for more detais.
@@ -36,15 +39,24 @@ The Basic Config File contains the MYSQL Connection and some Basic Config. Check
 *  db -> Contains the MYSQL Database Name
 
 ### Mail
-* dump -> If it "True" all Mails are dump to the Filesystem before Modified
+* dump -> Its old and not used any more, ignore it
 * addReceived -> If it "True" a "Received" Entry to the Mail Header
 * ReceivedName -> Contains the Name to Add in the "Received" Entry
 * sendLog -> If it is True, all outgoing Mails log in a MYSQL Database
 * mailAuthenticatedSender -> If it is "True" outgoing Mails Check if a AuthenticatedSender is required and if it match
 * spamc -> Check if the mail with spamc and reject if the Spam-Sore is to hight (for all mails)
+* dumpSQL -> Dump all mails in the MYSQL-Database
 
 ### SendAbuse
 If the Script have to send a abused Message (e.g. if the AuthenticatedSender don't match) it use the SMTP-Setting of this Section to send it.
+
+### sendMail
+This is a testing feature to send the mail not to another relay, send it direct to the receiving Mailserver.
+
+It only works if mailLog and dumpSQL are enabled!
+
+* enabled -> Enabled or Disabled this feature
+* loopTime -> how much minuts should be wait bevor next check of the DB for new E-Mails
 
 ## Installation
 Do the following Steps:

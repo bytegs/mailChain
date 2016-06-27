@@ -7,9 +7,6 @@ class MailChainSMTP(smtplib.SMTP):
 	def _print_debug(self, *args):
 		logStr = s = "{}".format(args)
 		self.log.append(logStr)
-		#print(logStr)
-		#self.log.append(logStr)
-		#print("PENIS")
-		#print(*args)
+
 	def getLog(self):
 		return self.log

@@ -23,3 +23,4 @@ debug:True
 
 [sendMail]
 loopTime: 60
+enabled: False
