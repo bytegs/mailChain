@@ -26,7 +26,6 @@ config.read(os.path.dirname(os.path.realpath(__file__))+'/config/defaults.cfg')
 
 logger.debug("Check MYSQL Connection")
 db = pymysql.connect(host=config.get('MYSQL', 'host'), user=config.get('MYSQL', 'user'), passwd=config.get('MYSQL', 'pass'), db=config.get('MYSQL', 'db'))
-die
 t = relayController()
 t.start()
 if(config.get('sendMail', 'enabled')=="True"):
