@@ -1,6 +1,6 @@
 import smtplib
 class MailChainSMTP(smtplib.SMTP):
-	def __init__(self, mailserver):
+	def __init__(self, mailserver=''):
 		smtplib.SMTP.__init__(self, mailserver)
 		self.log = []
 
