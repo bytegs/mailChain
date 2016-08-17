@@ -3,7 +3,7 @@ import logging
 import configparser
 import pymysql
 import sys
-from smtplib import SMTP
+#from smtplib import SMTP
 from sender import Mail, Message, Attachment
 import requests
 import re
