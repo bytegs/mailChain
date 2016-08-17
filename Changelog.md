@@ -9,6 +9,7 @@
 * add dumpToMYSQL
 * remove hdd dump
 * send without relay (beta)
+* mailLog is can not be disabled anymore
 
 #dev-master
 * add spamC parameter (general)

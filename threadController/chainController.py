@@ -25,6 +25,7 @@ class chainController(threading.Thread):
 		self.retStr = None
 		self.log = logging.getLogger()
 		self.log.debug("Init chain Controll Thread")
+		self.mailLogId = None
 		if(config == None):
 			self.config = configparser.RawConfigParser()
 			self.config.read('config/defaults.cfg')
@@ -165,6 +166,10 @@ class chainController(threading.Thread):
 			#sql = "INSERT INTO `mailLog`(`from`, `to`, `authenticatedSender`, `subject`) VALUES ('%s', '%s', '%s', '%s')" % (self.sender, self.t, asender, self.subject)
 			sql = "INSERT INTO `mailLog`(`from`, `to`, `authenticatedSender`, `subject`, `outgoingID`) VALUES (%s, %s, %s, %s, %s)"
 			self.cur.execute(sql, (self.sender, t, asender, self.subject, self.messageID))
+			if self.mailLogId == None:
+				self.cur.execute("SELECT LAST_INSERT_ID()")
+				id = self.cur.fetchone()
+				self.mailLogId = id
 		self.db.commit()
 		self.log.debug("Mail Logged in DB")
 
@@ -202,8 +207,7 @@ class chainController(threading.Thread):
 				# Add Recevied Header to Mail
 				if self.config.get('Mail', 'addReceived'):
 					self.addReceived(rule[0])
-				if self.config.get('Mail', 'sendLog'):
-					self.logMail()
+				self.logMail()
 				if rule[11] == True:
 					self.removeAuthenticatedSende()
 				if rule[6] != None:
@@ -224,7 +228,7 @@ class chainController(threading.Thread):
 					logStr = ""
 					for l in log:
 						logStr += l+"\r\n"
-					self.cur.execute("INSERT INTO `sendMailLog`(`mailID`, `log`) VALUES (%s, %s)", (int(mail[0]), logStr))
+					self.cur.execute("INSERT INTO `sendMailLog`(`mailID`, `log`) VALUES (%s, %s)", (int(self.mailLogId), logStr))
 					self.log.debug("Mail Send")
 					self.setResponse("250 OK")
 					self.setStatus("delivered")
