@@ -12,6 +12,7 @@ import traceback
 import tempfile
 import uuid
 import os
+from lib.mailChainSMTP import MailChainSMTP
 
 class chainController(threading.Thread):
 	def __init__(self, to, sender, subject, body, config = None, db = None):
@@ -207,18 +208,24 @@ class chainController(threading.Thread):
 					self.removeAuthenticatedSende()
 				if rule[6] != None:
 					self.log.info("Send via SMTP")
-					smtp = SMTP()
+					smtp = MailChainSMTP()
 					port = 25
 					if rule[7] != None:
 						port = int(rule[7])
 					self.log.debug("SMTP-Server: "+str(rule[6])+":"+str(port))
-					#smtp.set_debuglevel(1)
+					smtp.set_debuglevel(1)
 					smtp.connect(str(rule[6]), int(port))
 
 					if rule[8] != None and rule[9] != None:
 						smtp.login(rule[8], rule[9])
-					#smtp.sendmail(self.sender, self.to, self.body)
-					#smtp.quit()
+					smtp.sendmail(self.sender, self.to, self.body)
+					smtp.quit()
+					log = smtp.getLog();
+					logStr = ""
+					for l in log:
+						logStr += l+"\r\n"
+					self.cur.execute("INSERT INTO `sendMailLog`(`mailID`, `log`) VALUES (%s, %s)", (int(mail[0]), logStr))
+					self.log.debug("Mail Send")
 					self.setResponse("250 OK")
 					self.setStatus("delivered")
 				if rule[10] != None:
