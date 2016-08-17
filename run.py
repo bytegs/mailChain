@@ -1,8 +1,11 @@
+#!/usr/bin/python3
 from threadController.relayController import relayController
 from threadController.sendMail import sendMail
 import logging
 import time
 import configparser
+import os
+import pymysql
 
 
 logger = logging.getLogger()
@@ -12,10 +15,18 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
+logger.info("Start")
+logger.debug("Try to find "+os.path.dirname(os.path.realpath(__file__))+"/config/defaults.cfg")
+if os.path.isfile(os.path.dirname(os.path.realpath(__file__))+"/config/defaults.cfg") == False:
+	logger.error("Config file not found")
+	raise Exception("Config not found")
+
 config = configparser.RawConfigParser()
-config.read('defaults.cfg')
+config.read(os.path.dirname(os.path.realpath(__file__))+'/config/defaults.cfg')
 
-
+logger.debug("Check MYSQL Connection")
+db = pymysql.connect(host=config.get('MYSQL', 'host'), user=config.get('MYSQL', 'user'), passwd=config.get('MYSQL', 'pass'), db=config.get('MYSQL', 'db'))
+die
 t = relayController()
 t.start()
 if(config.get('sendMail', 'enabled')=="True"):

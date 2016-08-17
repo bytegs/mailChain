@@ -15,7 +15,7 @@ class relayController(threading.Thread):
 		self.log.debug("Init relay Controll Thread")
 		threading.Thread.__init__(self)
 		self.config = configparser.RawConfigParser()
-		self.config.read('defaults.cfg')
+		self.config.read('config/defaults.cfg')
 
 	def run(self):
 		self.log.debug("Run rely Controll Thread")

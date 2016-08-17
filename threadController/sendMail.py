@@ -10,7 +10,7 @@ import tempfile
 import uuid
 import urllib.request
 import traceback
-from mailChainSMTP import MailChainSMTP
+from lib.mailChainSMTP import MailChainSMTP
 
 class sendMail(threading.Thread):
 	def __init__(self, config = None, db = None):
@@ -19,7 +19,7 @@ class sendMail(threading.Thread):
 		threading.Thread.__init__(self)
 		if(config == None):
 			self.config = configparser.RawConfigParser()
-			self.config.read('defaults.cfg')
+			self.config.read('config/defaults.cfg')
 		else:
 			self.config = config
 		if(db == None):

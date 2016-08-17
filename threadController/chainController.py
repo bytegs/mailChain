@@ -26,7 +26,7 @@ class chainController(threading.Thread):
 		self.log.debug("Init chain Controll Thread")
 		if(config == None):
 			self.config = configparser.RawConfigParser()
-			self.config.read('defaults.cfg')
+			self.config.read('config/defaults.cfg')
 		else:
 			self.config = config
 		if(db == None):

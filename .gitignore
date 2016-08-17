@@ -1,4 +1,4 @@
-defaults.cfg
+config/defaults.cfg
 __pycache__/
 mail.txt
 *.pyc
