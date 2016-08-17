@@ -169,7 +169,7 @@ class chainController(threading.Thread):
 			if self.mailLogId == None:
 				self.cur.execute("SELECT LAST_INSERT_ID()")
 				id = self.cur.fetchone()
-				self.mailLogId = id
+				self.mailLogId = id[0]
 		self.db.commit()
 		self.log.debug("Mail Logged in DB")
 
